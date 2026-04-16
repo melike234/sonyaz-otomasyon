@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Son Yaz Karakter Analizi - MELİKE</title>
+    <style>
+        :root { --primary: #1a2a6c; --secondary: #b21f1f; --text: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #app { background: rgba(0, 0, 0, 0.85); padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); width: 500px; text-align: center; }
+        .btn { background: var(--secondary); color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-size: 18px; transition: 0.3s; margin-top: 20px; }
+        .btn:hover { transform: scale(1.05); background: #ff4b2b; }
+        .question { font-size: 22px; margin-bottom: 20px; }
+        .option { display: block; background: rgba(255,255,255,0.1); margin: 10px 0; padding: 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .option:hover { background: rgba(255,255,255,0.2); }
+        .hidden { display: none; }
+        #result { font-size: 24px; color: #fdbb2d; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Giriş Ekranı -->
+    <div id="welcome">
+        <h1>Son Yaz Otomasyonu</h1>
+        <p>Hangi karakter olduğunu öğrenmeye hazır mısın?</p>
+        <button class="btn" onclick="startQuiz()">Teste Başla</button>
+    </div>
+
+    <!-- Soru Ekranı -->
+    <div id="quiz" class="hidden">
+        <div id="question-number" style="font-size: 14px; color: #aaa;">Soru 1/10</div>
+        <div class="question" id="question-text">Soru buraya gelecek?</div>
+        <div id="options"></div>
+    </div>
+
+    <!-- Sonuç Ekranı -->
+    <div id="result-screen" class="hidden">
+        <h2>Analiz Tamamlandı!</h2>
+        <p>Senin karakterin:</p>
+        <div id="result"></div>
+        <p id="desc" style="font-style: italic; margin-top: 10px;"></p>
+        <button class="btn" onclick="location.reload()">Tekrar Test Et</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        "Adalet senin için ne kadar önemli?", "Zor bir durumda aileni mi seçersin yoksa doğruları mı?",
+        "Öfkeni kontrol edebilir misin?", "Geçmişinden kaçar mısın yoksa yüzleşir misin?",
+        "Dostun için neleri feda edersin?", "Yalnız kalmayı mı seversin kalabalığı mı?",
+        "Bir karar alırken mantığın mı duyguların mı?", "İhaneti affeder misin?",
+        "Sence güç ne demektir?", "Seni en iyi hangi kelime tanımlar?"
+    ];
+    let currentQ = 0; let totalScore = 0;
+
+    function startQuiz() {
+        document.getElementById('welcome').classList.add('hidden');
+        document.getElementById('quiz').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        document.getElementById('question-number').innerText = `Soru ${currentQ + 1}/10`;
+        document.getElementById('question-text').innerText = questions[currentQ];
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = `
+            <div class="option" onclick="next(1)">Kesinlikle Evet</div>
+            <div class="option" onclick="next(2)">Bazen / Kararsızım</div>
+            <div class="option" onclick="next(3)">Hayır, Asla</div>
+        `;
+    }
+
+    function next(p) {
+        totalScore += p;
+        currentQ++;
+        if (currentQ < 10) showQuestion();
+        else sendResult();
+    }
+
+    function sendResult() {
+        document.getElementById('quiz').innerHTML = "Analiz ediliyor...";
+        fetch('/api/quiz/sonuc', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({puan: totalScore})
+        })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('quiz').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('result').innerText = data.karakter;
+                document.getElementById('desc').innerText = data.aciklama;
+            });
+    }
+</script>
+</body>
+</html>
